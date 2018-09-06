@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Max Kellermann <max.kellermann@gmail.com>
+ * Copyright 2016-2018 Max Kellermann <max.kellermann@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,36 +27,27 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef JAVA_EXCEPTION_HXX
-#define JAVA_EXCEPTION_HXX
+#include "Error.hxx"
+#include "Util/Exception.hxx"
 
-#include <stdexcept>
-
-#include <jni.h>
-
-namespace Java {
-	class Exception : public std::runtime_error {
-	public:
-		explicit Exception(JNIEnv *env, jthrowable e) noexcept;
-	};
-
-	/**
-	 * Check if a Java exception has occurred, and if yes, convert
-	 * it to a C++ #Exception and throw that.
-	 */
-	void RethrowException(JNIEnv *env);
-
-	/**
-	 * Check if an exception has occurred, and discard it.
-	 *
-	 * @return true if an exception was found (and discarded)
-	 */
-	static inline bool DiscardException(JNIEnv *env) noexcept {
-		bool result = env->ExceptionCheck();
-		if (result)
-			env->ExceptionClear();
-		return result;
-	}
+extern "C" {
+#include <lua.h>
 }
 
-#endif
+namespace Lua {
+
+Error
+PopError(lua_State *L)
+{
+  Error e(lua_tostring(L, -1));
+  lua_pop(L, 1);
+  return e;
+}
+
+void
+Push(lua_State *L, std::exception_ptr e) noexcept
+{
+	lua_pushstring(L, GetFullMessage(e).c_str());
+}
+
+} // namespace Lua

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Max Kellermann <max.kellermann@gmail.com>
+ * Copyright 2016-2018 Max Kellermann <max.kellermann@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,36 +27,33 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef JAVA_EXCEPTION_HXX
-#define JAVA_EXCEPTION_HXX
+#ifndef LUA_ERROR_HXX
+#define LUA_ERROR_HXX
 
 #include <stdexcept>
 
-#include <jni.h>
+struct lua_State;
 
-namespace Java {
-	class Exception : public std::runtime_error {
-	public:
-		explicit Exception(JNIEnv *env, jthrowable e) noexcept;
-	};
+namespace Lua {
 
-	/**
-	 * Check if a Java exception has occurred, and if yes, convert
-	 * it to a C++ #Exception and throw that.
-	 */
-	void RethrowException(JNIEnv *env);
+class Error : public std::runtime_error {
+public:
+  explicit Error(const char *_msg):std::runtime_error(_msg) {}
+};
 
-	/**
-	 * Check if an exception has occurred, and discard it.
-	 *
-	 * @return true if an exception was found (and discarded)
-	 */
-	static inline bool DiscardException(JNIEnv *env) noexcept {
-		bool result = env->ExceptionCheck();
-		if (result)
-			env->ExceptionClear();
-		return result;
-	}
+/**
+ * After a failed call to lua_pcall(), load and pop the Lua error
+ * from the stack and store it in an #Error instance.
+ */
+Error
+PopError(lua_State *L);
+
+/**
+ * Pushes a representation of the given C++ exception on the stack.
+ */
+void
+Push(lua_State *L, std::exception_ptr e) noexcept;
+
 }
 
 #endif

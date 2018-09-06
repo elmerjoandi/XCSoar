@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Max Kellermann <max.kellermann@gmail.com>
+ * Copyright 2016-2017 Max Kellermann <max.kellermann@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,36 +27,22 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef JAVA_EXCEPTION_HXX
-#define JAVA_EXCEPTION_HXX
+#ifndef LUA_RUN_FILE_HXX
+#define LUA_RUN_FILE_HXX
 
-#include <stdexcept>
+struct lua_State;
+class Path;
 
-#include <jni.h>
+namespace Lua {
 
-namespace Java {
-	class Exception : public std::runtime_error {
-	public:
-		explicit Exception(JNIEnv *env, jthrowable e) noexcept;
-	};
+/**
+ * Load, compile and run the specified file.
+ *
+ * Throws std::runtime_error on error.
+ */
+void
+RunFile(lua_State *L, Path path);
 
-	/**
-	 * Check if a Java exception has occurred, and if yes, convert
-	 * it to a C++ #Exception and throw that.
-	 */
-	void RethrowException(JNIEnv *env);
-
-	/**
-	 * Check if an exception has occurred, and discard it.
-	 *
-	 * @return true if an exception was found (and discarded)
-	 */
-	static inline bool DiscardException(JNIEnv *env) noexcept {
-		bool result = env->ExceptionCheck();
-		if (result)
-			env->ExceptionClear();
-		return result;
-	}
 }
 
 #endif
